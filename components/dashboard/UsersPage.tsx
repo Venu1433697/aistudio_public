@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, ChevronDown, Loader2 } from 'lucide-react';
+import { Search, ChevronDown, Loader2, Trash2, Plus, X, Edit2 } from 'lucide-react';
 import { api } from '../../services/api';
 import toast from 'react-hot-toast';
 
@@ -10,6 +10,15 @@ export const UsersPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [modalFormData, setModalFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    mobile: '',
+    age: ''
+  });
 
   // Fetch users from API
   useEffect(() => {
@@ -27,6 +36,66 @@ export const UsersPage: React.FC = () => {
 
     fetchUsers();
   }, []);
+
+  const handleDeleteUser = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) return;
+
+    try {
+      await api.deleteUser(id);
+      setUsers(prev => prev.filter(u => u._id !== id && u.id !== id));
+      toast.success('User deleted successfully');
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast.error('Failed to delete user');
+    }
+  };
+
+  const handleOpenModal = (user?: any) => {
+    if (user) {
+      setEditingUser(user);
+      setModalFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        mobile: user.mobile || '',
+        age: user.age || ''
+      });
+    } else {
+      setEditingUser(null);
+      setModalFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        mobile: '',
+        age: ''
+      });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingUser(null);
+  };
+
+  const handleModalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingUser) {
+        const updated = await api.updateUser(editingUser._id || editingUser.id, modalFormData);
+        setUsers(prev => prev.map(u => (u._id === updated._id || u.id === updated._id) ? updated : u));
+        toast.success('User updated successfully');
+      } else {
+        const created = await api.createUser(modalFormData);
+        setUsers(prev => [created, ...prev]);
+        toast.success('User created successfully');
+      }
+      handleCloseModal();
+    } catch (error) {
+      console.error('Error saving user:', error);
+      toast.error('Failed to save user');
+    }
+  };
 
   // Reset to first page whenever search or items per page changes
   useEffect(() => {
@@ -57,10 +126,10 @@ export const UsersPage: React.FC = () => {
 
   if (isLoading) {
     return (
-        <div className="flex flex-col items-center justify-center h-96 text-gray-500">
-            <Loader2 className="w-8 h-8 animate-spin mb-2 text-black" />
-            <p>Loading Users...</p>
-        </div>
+      <div className="flex flex-col items-center justify-center h-96 text-gray-500">
+        <Loader2 className="w-8 h-8 animate-spin mb-2 text-black" />
+        <p>Loading Users...</p>
+      </div>
     );
   }
 
@@ -68,7 +137,16 @@ export const UsersPage: React.FC = () => {
     <div className="space-y-6">
       {/* Header Section */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Users</h2>
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="text-2xl font-bold text-gray-900">Users</h2>
+          <button
+            onClick={() => handleOpenModal()}
+            className="bg-black text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-colors"
+          >
+            <Plus size={18} />
+            <span>Add User</span>
+          </button>
+        </div>
         <p className="text-sm text-gray-500">
           Listing of registered users with basic attributes. Use search to filter. [web:{filteredUsers.length}]
         </p>
@@ -76,13 +154,13 @@ export const UsersPage: React.FC = () => {
 
       {/* Main Card */}
       <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
-        
+
         {/* Search Bar */}
         <div className="p-6 border-b border-gray-200">
           <div className="relative group">
-            <input 
-              type="text" 
-              placeholder="Search by name, email or mobile" 
+            <input
+              type="text"
+              placeholder="Search by name, email or mobile"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-gray-50 text-gray-900 border border-gray-300 rounded-lg py-3 pl-4 pr-10 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all placeholder-gray-400"
@@ -101,6 +179,7 @@ export const UsersPage: React.FC = () => {
                 <th className="text-left py-4 px-6 text-sm font-semibold text-gray-500 w-1/12">Age</th>
                 <th className="text-left py-4 px-6 text-sm font-semibold text-gray-500 w-1/4">Mobile number</th>
                 <th className="text-left py-4 px-6 text-sm font-semibold text-gray-500 w-1/3">Email</th>
+                <th className="text-right py-4 px-6 text-sm font-semibold text-gray-500 w-1/12">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -111,11 +190,27 @@ export const UsersPage: React.FC = () => {
                   <td className="py-4 px-6 text-sm text-gray-600">{user.age || '-'}</td>
                   <td className="py-4 px-6 text-sm text-gray-600 font-mono">{user.mobile || '-'}</td>
                   <td className="py-4 px-6 text-sm text-gray-600">{user.email}</td>
+                  <td className="py-4 px-6 text-sm text-right flex justify-end gap-2">
+                    <button
+                      onClick={() => handleOpenModal(user)}
+                      className="text-gray-400 hover:text-black transition-colors p-1"
+                      title="Edit User"
+                    >
+                      <Edit2 size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteUser(user._id || user.id)}
+                      className="text-gray-400 hover:text-red-600 transition-colors p-1"
+                      title="Delete User"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </td>
                 </tr>
               ))}
               {filteredUsers.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-gray-400">
+                  <td colSpan={6} className="py-8 text-center text-gray-400">
                     No users found matching "{searchTerm}"
                   </td>
                 </tr>
@@ -126,12 +221,12 @@ export const UsersPage: React.FC = () => {
 
         {/* Pagination Footer */}
         <div className="p-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50">
-          
+
           {/* Rows per page selector */}
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <span>Show</span>
             <div className="relative">
-              <select 
+              <select
                 value={itemsPerPage}
                 onChange={(e) => setItemsPerPage(Number(e.target.value))}
                 className="appearance-none bg-white border border-gray-300 text-gray-700 rounded px-3 py-1 pr-8 focus:outline-none focus:border-black cursor-pointer"
@@ -148,7 +243,7 @@ export const UsersPage: React.FC = () => {
 
           {/* Pagination Controls (Symbols) */}
           <div className="flex items-center gap-2">
-            <button 
+            <button
               onClick={() => handlePageChange(1)}
               disabled={currentPage === 1 || totalPages === 0}
               className="px-3 py-1.5 text-sm font-bold text-gray-500 bg-white border border-gray-200 rounded hover:bg-gray-100 hover:text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[32px]"
@@ -156,7 +251,7 @@ export const UsersPage: React.FC = () => {
             >
               &lt;&lt;
             </button>
-            <button 
+            <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1 || totalPages === 0}
               className="px-3 py-1.5 text-sm font-bold text-gray-500 bg-white border border-gray-200 rounded hover:bg-gray-100 hover:text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[32px]"
@@ -164,12 +259,12 @@ export const UsersPage: React.FC = () => {
             >
               &lt;
             </button>
-            
+
             <span className="text-xs text-gray-500 px-2">
               Page <span className="text-black font-semibold">{totalPages === 0 ? 0 : currentPage}</span> of <span className="text-black font-semibold">{totalPages}</span>
             </span>
-            
-            <button 
+
+            <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages || totalPages === 0}
               className="px-3 py-1.5 text-sm font-bold text-gray-500 bg-white border border-gray-200 rounded hover:bg-gray-100 hover:text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[32px]"
@@ -177,7 +272,7 @@ export const UsersPage: React.FC = () => {
             >
               &gt;
             </button>
-            <button 
+            <button
               onClick={() => handlePageChange(totalPages)}
               disabled={currentPage === totalPages || totalPages === 0}
               className="px-3 py-1.5 text-sm font-bold text-gray-500 bg-white border border-gray-200 rounded hover:bg-gray-100 hover:text-black transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[32px]"
@@ -190,6 +285,90 @@ export const UsersPage: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-fade-in-up">
+            <div className="flex justify-between items-center p-6 border-b border-gray-100">
+              <h3 className="text-lg font-bold text-gray-900">
+                {editingUser ? 'Edit User' : 'Add New User'}
+              </h3>
+              <button onClick={handleCloseModal} className="text-gray-400 hover:text-black">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleModalSubmit} className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={modalFormData.firstName}
+                    onChange={e => setModalFormData({ ...modalFormData, firstName: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-black"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                  <input
+                    type="text"
+                    value={modalFormData.lastName}
+                    onChange={e => setModalFormData({ ...modalFormData, lastName: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-black"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  required
+                  value={modalFormData.email}
+                  onChange={e => setModalFormData({ ...modalFormData, email: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-black"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
+                  <input
+                    type="tel"
+                    value={modalFormData.mobile}
+                    onChange={e => setModalFormData({ ...modalFormData, mobile: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-black"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
+                  <input
+                    type="number"
+                    value={modalFormData.age}
+                    onChange={e => setModalFormData({ ...modalFormData, age: e.target.value })}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-black"
+                  />
+                </div>
+              </div>
+              <div className="pt-4 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-800"
+                >
+                  {editingUser ? 'Save Changes' : 'Create User'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
