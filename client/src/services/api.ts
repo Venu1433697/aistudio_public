@@ -1,6 +1,6 @@
 import toast from 'react-hot-toast';
 
-const BASE_URL = 'http://localhost:4000/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api';
 
 // Helper: Try to fetch from backend. If it fails (server down), return the fallback value.
 // This prevents the "Failed to fetch" crash while keeping data empty/dynamic.
@@ -214,6 +214,7 @@ export const api = {
   getImageUrl: (path: string) => {
     if (!path) return '';
     if (path.startsWith('http') || path.startsWith('blob')) return path;
-    return `http://localhost:4000/${path.startsWith('/') ? path.slice(1) : path}`;
+    const serverUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 'http://localhost:4000';
+    return `${serverUrl}/${path.startsWith('/') ? path.slice(1) : path}`;
   }
 };
