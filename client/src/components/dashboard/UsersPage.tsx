@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, ChevronDown, Loader2, Trash2, Plus, X, Edit2 } from 'lucide-react';
+import { Search, ChevronDown, Loader2, Plus, X, Edit2 } from 'lucide-react';
 import { api } from '../../services/api';
 import toast from 'react-hot-toast';
 
@@ -37,18 +37,7 @@ export const UsersPage: React.FC = () => {
     fetchUsers();
   }, []);
 
-  const handleDeleteUser = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
-
-    try {
-      await api.deleteUser(id);
-      setUsers(prev => prev.filter(u => u._id !== id && u.id !== id));
-      toast.success('User deleted successfully');
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      toast.error('Failed to delete user');
-    }
-  };
+  // Delete user functionality removed per requirement 13
 
   const handleOpenModal = (user?: any) => {
     if (user) {
@@ -197,13 +186,6 @@ export const UsersPage: React.FC = () => {
                       title="Edit User"
                     >
                       <Edit2 size={18} />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteUser(user._id || user.id)}
-                      className="text-gray-400 hover:text-red-600 transition-colors p-1"
-                      title="Delete User"
-                    >
-                      <Trash2 size={18} />
                     </button>
                   </td>
                 </tr>

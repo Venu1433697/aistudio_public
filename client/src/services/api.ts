@@ -144,6 +144,73 @@ export const api = {
     return await res.json();
   },
 
+  // Visitor tracking
+  trackVisitor: async (email?: string) => {
+    try {
+      const res = await fetch(`${BASE_URL}/visitors/track`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email || '' }),
+      });
+      if (!res.ok) throw new Error('Failed to track visitor');
+      return await res.json();
+    } catch (e) {
+      console.warn('Visitor tracking failed:', e);
+      return null;
+    }
+  },
+
+  getVisitorCount: async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/visitors/count`);
+      if (!res.ok) throw new Error('Failed to get visitor count');
+      const data = await res.json();
+      return data.count;
+    } catch (e) {
+      console.warn('Get visitor count failed:', e);
+      return 0;
+    }
+  },
+
+  // Profile image upload
+  uploadProfileImage: async (formData: FormData) => {
+    const res = await fetch(`${BASE_URL}/admin-profile/upload-profile-image`, {
+      method: 'POST',
+      headers: { ...getAuthHeader() },
+      body: formData,
+    });
+    if (!res.ok) throw new Error('Failed to upload profile image');
+    return await res.json();
+  },
+
+  uploadBannerImage: async (formData: FormData) => {
+    const res = await fetch(`${BASE_URL}/admin-profile/upload-banner-image`, {
+      method: 'POST',
+      headers: { ...getAuthHeader() },
+      body: formData,
+    });
+    if (!res.ok) throw new Error('Failed to upload banner image');
+    return await res.json();
+  },
+
+  deleteProfileImage: async () => {
+    const res = await fetch(`${BASE_URL}/admin-profile/profile-image`, {
+      method: 'DELETE',
+      headers: { ...getAuthHeader() },
+    });
+    if (!res.ok) throw new Error('Failed to delete profile image');
+    return await res.json();
+  },
+
+  deleteBannerImage: async () => {
+    const res = await fetch(`${BASE_URL}/admin-profile/banner-image`, {
+      method: 'DELETE',
+      headers: { ...getAuthHeader() },
+    });
+    if (!res.ok) throw new Error('Failed to delete banner image');
+    return await res.json();
+  },
+
   getImageUrl: (path: string) => {
     if (!path) return '';
     if (path.startsWith('http') || path.startsWith('blob')) return path;

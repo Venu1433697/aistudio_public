@@ -10,6 +10,7 @@ const authRoutes = require('./routes/auth');
 const usersRoutes = require('./routes/users');
 const adminRoutes = require('./routes/adminProfile');
 const galleryRoutes = require('./routes/gallery');
+const visitorRoutes = require('./routes/visitors');
 
 const app = express();
 app.use(cors());
@@ -31,6 +32,7 @@ app.use('/api/admin-auth', authRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/admin-profile', adminRoutes);
 app.use('/api/business-gallery', galleryRoutes);
+app.use('/api/visitors', visitorRoutes);
 // (health endpoint removed)
 
 app.get('/', (req, res) => res.json({ ok: true }));

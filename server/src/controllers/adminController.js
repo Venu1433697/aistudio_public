@@ -25,4 +25,54 @@ async function updateProfile(req, res) {
   res.json(admin);
 }
 
-module.exports = { getProfile, updateProfile };
+async function uploadProfileImage(req, res) {
+  if (!req.file) return res.status(400).json({ message: 'Image file required' });
+
+  const url = `/uploads/profiles/${req.file.filename}`;
+  const admin = await Admin.findByIdAndUpdate(
+    req.admin.id,
+    { profileImage: url },
+    { new: true, select: '-password' }
+  );
+
+  if (!admin) return res.status(404).json({ message: 'Admin not found' });
+  res.json(admin);
+}
+
+async function uploadBannerImage(req, res) {
+  if (!req.file) return res.status(400).json({ message: 'Image file required' });
+
+  const url = `/uploads/banners/${req.file.filename}`;
+  const admin = await Admin.findByIdAndUpdate(
+    req.admin.id,
+    { bannerImage: url },
+    { new: true, select: '-password' }
+  );
+
+  if (!admin) return res.status(404).json({ message: 'Admin not found' });
+  res.json(admin);
+}
+
+async function deleteProfileImage(req, res) {
+  const admin = await Admin.findByIdAndUpdate(
+    req.admin.id,
+    { profileImage: '' },
+    { new: true, select: '-password' }
+  );
+
+  if (!admin) return res.status(404).json({ message: 'Admin not found' });
+  res.json(admin);
+}
+
+async function deleteBannerImage(req, res) {
+  const admin = await Admin.findByIdAndUpdate(
+    req.admin.id,
+    { bannerImage: '' },
+    { new: true, select: '-password' }
+  );
+
+  if (!admin) return res.status(404).json({ message: 'Admin not found' });
+  res.json(admin);
+}
+
+module.exports = { getProfile, updateProfile, uploadProfileImage, uploadBannerImage, deleteProfileImage, deleteBannerImage };

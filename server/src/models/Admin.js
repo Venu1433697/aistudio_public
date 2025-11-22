@@ -7,6 +7,8 @@ const AdminSchema = new mongoose.Schema({
   password: { type: String, required: true },
   mobile: { type: String, default: '' },
   gender: { type: String, enum: ['male', 'female', 'other', ''], default: '' },
+  profileImage: { type: String, default: '' },
+  bannerImage: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now }
 });
 

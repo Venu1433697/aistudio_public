@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Users, Globe, Activity, Pencil, Loader2, Trash2, Plus, X, Edit3 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api';
+import { ConfirmDialog } from '../ConfirmDialog';
 
 // --- Types & Interfaces ---
 interface StatCardProps {
@@ -117,7 +118,7 @@ const GalleryItem: React.FC<GalleryItemProps> = ({ image, title, subtitle, onUpd
 // --- Main Component ---
 export const DashboardHome: React.FC = () => {
     // State for metrics
-    const [uniqueVisitors, setUniqueVisitors] = useState(12450);
+    const [uniqueVisitors, setUniqueVisitors] = useState(0);
     const [liveUsers, setLiveUsers] = useState(84);
     const [registeredUsers, setRegisteredUsers] = useState(0);
 
@@ -128,6 +129,8 @@ export const DashboardHome: React.FC = () => {
     const [editFormData, setEditFormData] = useState({ title: '', description: '' });
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [uploadFormData, setUploadFormData] = useState({ title: '', description: '', file: null as File | null });
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
     // Fetch Initial Data
     useEffect(() => {
@@ -136,6 +139,17 @@ export const DashboardHome: React.FC = () => {
                 // Fetch Users Count
                 const users = await api.getUsers();
                 setRegisteredUsers(users.length);
+
+                // Fetch Visitor Count
+                const visitorCount = await api.getVisitorCount();
+                setUniqueVisitors(visitorCount);
+
+                // Track current visitor
+                const profile = localStorage.getItem('os_profile');
+                if (profile) {
+                    const { email } = JSON.parse(profile);
+                    await api.trackVisitor(email);
+                }
 
                 // Fetch Gallery
                 const gallery = await api.getGallery();
@@ -155,14 +169,8 @@ export const DashboardHome: React.FC = () => {
         fetchData();
     }, []);
 
-    // Simulate live traffic updates
+    // Simulate live users only (not visitors)
     useEffect(() => {
-        // Interval for Unique Visitors (slowly increasing)
-        const visitorInterval = setInterval(() => {
-            const increment = Math.floor(Math.random() * 3);
-            setUniqueVisitors(prev => prev + increment);
-        }, 5000);
-
         // Interval for Live Users (fluctuating up and down)
         const liveInterval = setInterval(() => {
             setLiveUsers(prev => {
@@ -173,7 +181,6 @@ export const DashboardHome: React.FC = () => {
         }, 2000);
 
         return () => {
-            clearInterval(visitorInterval);
             clearInterval(liveInterval);
         };
     }, []);
@@ -224,9 +231,14 @@ export const DashboardHome: React.FC = () => {
     };
 
     const handleDeleteImage = async (index: number) => {
-        if (!window.confirm('Are you sure you want to delete this image?')) return;
+        setDeleteIndex(index);
+        setShowDeleteConfirm(true);
+    };
 
-        const item = galleryItems[index];
+    const confirmDelete = async () => {
+        if (deleteIndex === null) return;
+
+        const item = galleryItems[deleteIndex];
         const toastId = toast.loading('Deleting image...');
 
         try {
@@ -234,11 +246,14 @@ export const DashboardHome: React.FC = () => {
                 await api.deleteGalleryImage(item.id);
             }
 
-            setGalleryItems(prev => prev.filter((_, i) => i !== index));
+            setGalleryItems(prev => prev.filter((_, i) => i !== deleteIndex));
             toast.success('Image deleted successfully', { id: toastId });
         } catch (error) {
             console.error('Delete failed', error);
             toast.error('Failed to delete image', { id: toastId });
+        } finally {
+            setShowDeleteConfirm(false);
+            setDeleteIndex(null);
         }
     };
 
@@ -518,6 +533,21 @@ export const DashboardHome: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Dialog */}
+            <ConfirmDialog
+                isOpen={showDeleteConfirm}
+                title="Delete Image"
+                message="Are you sure you want to delete this image? This action cannot be undone."
+                confirmText="Yes, Delete"
+                cancelText="Cancel"
+                onConfirm={confirmDelete}
+                onCancel={() => {
+                    setShowDeleteConfirm(false);
+                    setDeleteIndex(null);
+                }}
+                type="danger"
+            />
         </div>
     );
 };
