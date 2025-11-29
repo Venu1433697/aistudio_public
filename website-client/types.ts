@@ -20,9 +20,11 @@ export interface FilterCategory {
 }
 
 export interface User {
+  _id?: string;
   name: string;
   company?: string;
   email: string;
   mobile: string;
   avatarUrl: string;
+  billingDetails?: any;
 }

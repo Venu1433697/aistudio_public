@@ -213,7 +213,7 @@ export const api = {
     formData.append('adminEmail', adminEmail);
     const res = await fetch(`${BASE_URL}/users/${userId}/invoices`, {
       method: 'POST',
-      headers: { 'x-auth-token': getAuthHeader()['Authorization']?.replace('Bearer ', '') || '' },
+      headers: getAuthHeader(),
       body: formData,
     });
     if (!res.ok) throw new Error('Failed to upload invoice');
@@ -226,7 +226,7 @@ export const api = {
     formData.append('adminEmail', adminEmail);
     const res = await fetch(`${BASE_URL}/users/${userId}/invoices/${invoiceId}`, {
       method: 'PUT',
-      headers: { 'x-auth-token': getAuthHeader()['Authorization']?.replace('Bearer ', '') || '' },
+      headers: getAuthHeader(),
       body: formData,
     });
     if (!res.ok) throw new Error('Failed to replace invoice');

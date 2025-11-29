@@ -1,24 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { User } from '../types';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { updateProfile, getProfile, deleteProfile } from '../services/api';
 
-interface ProfileProps {
-  user: User;
-  onLogout: () => void;
-  onNavigate: (view: string) => void;
-  onUpdateUser: (data: Partial<User>) => void;
-}
-
-const Profile: React.FC<ProfileProps> = ({ user, onLogout, onNavigate, onUpdateUser }) => {
+const Profile: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, logout: authLogout, updateUser: authUpdateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
-    name: user.name,
-    company: user.company || '',
-    email: user.email,
-    mobile: user.mobile,
-    avatarUrl: user.avatarUrl
+    name: user?.name || '',
+    company: user?.company || '',
+    email: user?.email || '',
+    mobile: user?.mobile || '',
+    avatarUrl: user?.avatarUrl || ''
   });
 
   useEffect(() => {
@@ -33,7 +29,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, onNavigate, onUpdateU
           mobile: userData.mobile,
           avatarUrl: userData.profileImage
         });
-        onUpdateUser({
+        authUpdateUser({
           name: userData.name,
           company: userData.companyName,
           email: userData.email,
@@ -56,7 +52,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, onNavigate, onUpdateU
         mobile: formData.mobile,
         profileImage: formData.avatarUrl
       });
-      onUpdateUser({
+      authUpdateUser({
         name: response.data.name,
         company: response.data.companyName,
         email: response.data.email,
@@ -95,7 +91,8 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, onNavigate, onUpdateU
       await deleteProfile();
       localStorage.removeItem('token');
       alert("Profile deleted successfully");
-      onLogout();
+      authLogout();
+      navigate('/');
     } catch (error) {
       console.error("Failed to delete profile", error);
       alert("Failed to delete profile");
@@ -172,7 +169,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, onNavigate, onUpdateU
                 <p className="text-gray-500 text-sm font-medium">{user.company || 'Private Client'}</p>
               </div>
               <button
-                onClick={onLogout}
+                onClick={() => { authLogout(); navigate('/'); }}
                 className="px-6 py-2 bg-gray-100 text-gray-600 font-bold rounded-full hover:bg-red-50 hover:text-red-600 transition-colors text-sm border border-gray-200"
               >
                 Log Out
@@ -248,7 +245,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, onNavigate, onUpdateU
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Billing Button */}
                   <div
-                    onClick={() => onNavigate('billing')}
+                    onClick={() => navigate('/billing')}
                     className="flex items-center justify-between bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group"
                   >
                     <div className="flex items-center gap-4">
@@ -265,7 +262,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, onNavigate, onUpdateU
 
                   {/* Reset PIN Button */}
                   <div
-                    onClick={() => onNavigate('reset-mpin')}
+                    onClick={() => navigate('/reset-mpin')}
                     className="flex items-center justify-between bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-brand-pink/30 transition-all cursor-pointer group"
                   >
                     <div className="flex items-center gap-4">

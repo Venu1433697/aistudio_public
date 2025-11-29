@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { forgotMpinVerify, resetMpinUnauth, resetMpin } from '../services/api';
 
-interface ResetMpinProps {
-    onNavigate: (view: string) => void;
-    userMobile?: string;
-}
-
-const ResetMpin: React.FC<ResetMpinProps> = ({ onNavigate, userMobile }) => {
+const ResetMpin: React.FC = () => {
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const userMobile = user?.mobile;
     // If userMobile is present, we are in "Change PIN" mode (logged in).
     // If userMobile is missing, we are in "Forgot PIN" mode (logged out), so start at mobile verification step.
     const [step, setStep] = useState<'verify' | 'new-pin' | 'forgot-verify'>(userMobile ? 'verify' : 'forgot-verify');
@@ -88,7 +88,7 @@ const ResetMpin: React.FC<ResetMpinProps> = ({ onNavigate, userMobile }) => {
             }
             setSuccess('M-PIN Updated Successfully!');
             setTimeout(() => {
-                onNavigate(userMobile ? 'profile' : 'login');
+                navigate(userMobile ? '/profile' : '/login');
             }, 1500);
         } catch (err: any) {
             setError(err.response?.data?.message || 'Failed to update M-PIN');
@@ -103,7 +103,7 @@ const ResetMpin: React.FC<ResetMpinProps> = ({ onNavigate, userMobile }) => {
 
                 {/* Header */}
                 <div className="bg-brand-dark text-white p-6 text-center relative">
-                    <button onClick={() => onNavigate(userMobile ? 'profile' : 'login')} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
+                    <button onClick={() => navigate(userMobile ? '/profile' : '/login')} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                     </button>
                     <h2 className="text-xl font-bold font-serif">Reset M-PIN</h2>

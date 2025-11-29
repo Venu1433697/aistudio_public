@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Loader2, Save, X, DollarSign, User, Mail, Calendar, Edit3, Upload, Download, Trash2, FileText, Plus, Check, RefreshCw, Key } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, X, DollarSign, User, Mail, Calendar, Edit3, Upload, Download, Trash2, FileText, Plus, Check, RefreshCw, Key, Eye } from 'lucide-react';
 import { api } from '../../services/api';
 import toast from 'react-hot-toast';
+import { ConfirmDialog } from '../ConfirmDialog';
 
 interface BillingDetailsPageProps {
     userId: string;
@@ -35,6 +36,13 @@ export const BillingDetailsPage: React.FC<BillingDetailsPageProps> = ({ userId, 
     const [isResettingMpin, setIsResettingMpin] = useState(false);
     const [newMpin, setNewMpin] = useState('');
     const [showMpinModal, setShowMpinModal] = useState(false);
+
+    // Invoice delete confirmation state
+    const [deleteConfirmInvoice, setDeleteConfirmInvoice] = useState<any>(null);
+
+    // PDF viewer state
+    const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
+    const [pdfViewerUrl, setPdfViewerUrl] = useState('');
 
     useEffect(() => {
         const fetchUserDetails = async () => {
@@ -147,18 +155,42 @@ export const BillingDetailsPage: React.FC<BillingDetailsPageProps> = ({ userId, 
         }
     };
 
-    const handleDeleteInvoice = async (invoiceId: string) => {
-        const confirmed = window.confirm('Are you sure you want to delete this invoice?');
-        if (!confirmed) return;
+    const handleDeleteInvoice = (invoice: any) => {
+        setDeleteConfirmInvoice(invoice);
+    };
+
+    const handleDeleteInvoiceConfirm = async () => {
+        if (!deleteConfirmInvoice) return;
 
         try {
-            await api.deleteInvoice(userId, invoiceId);
-            setInvoices(prev => prev.filter(inv => inv._id !== invoiceId));
+            await api.deleteInvoice(userId, deleteConfirmInvoice._id);
+            setInvoices(prev => prev.filter(inv => inv._id !== deleteConfirmInvoice._id));
             toast.success('Invoice deleted successfully');
+            setDeleteConfirmInvoice(null);
         } catch (error) {
             console.error('Error deleting invoice:', error);
             toast.error('Failed to delete invoice');
         }
+    };
+
+    const handleDeleteInvoiceCancel = () => {
+        setDeleteConfirmInvoice(null);
+    };
+
+    const handleViewPdf = (invoice: any) => {
+        const url = api.viewInvoice(userId, invoice._id);
+        setPdfViewerUrl(url);
+        setPdfViewerOpen(true);
+    };
+
+    const handleClosePdfViewer = () => {
+        setPdfViewerOpen(false);
+        setPdfViewerUrl('');
+    };
+
+    const handleDownloadPdf = (invoice: any) => {
+        const url = api.viewInvoice(userId, invoice._id);
+        window.open(url, '_blank');
     };
 
     // --- Tracker Functions ---
@@ -541,17 +573,22 @@ export const BillingDetailsPage: React.FC<BillingDetailsPageProps> = ({ userId, 
                                     >
                                         <RefreshCw size={18} />
                                     </button>
-                                    <a
-                                        href={api.viewInvoice(userId, invoice._id)}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                    <button
+                                        onClick={() => handleViewPdf(invoice)}
+                                        className="p-2 text-gray-600 hover:text-blue-600 transition-colors"
+                                        title="View Invoice"
+                                    >
+                                        <Eye size={18} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDownloadPdf(invoice)}
                                         className="p-2 text-gray-600 hover:text-black transition-colors"
                                         title="Download Invoice"
                                     >
                                         <Download size={18} />
-                                    </a>
+                                    </button>
                                     <button
-                                        onClick={() => handleDeleteInvoice(invoice._id)}
+                                        onClick={() => handleDeleteInvoice(invoice)}
                                         className="p-2 text-gray-600 hover:text-red-600 transition-colors"
                                         title="Delete Invoice"
                                     >
@@ -721,6 +758,43 @@ export const BillingDetailsPage: React.FC<BillingDetailsPageProps> = ({ userId, 
                     )}
                 </div>
             </div>
+
+            {/* Invoice Delete Confirmation Modal */}
+            <ConfirmDialog
+                isOpen={!!deleteConfirmInvoice}
+                title="Delete Invoice"
+                message={`Are you sure you want to delete "${deleteConfirmInvoice?.filename}"?\n\nThis action cannot be undone.`}
+                confirmText="Yes, Delete"
+                cancelText="No, Keep It"
+                onConfirm={handleDeleteInvoiceConfirm}
+                onCancel={handleDeleteInvoiceCancel}
+                type="danger"
+            />
+
+            {/* PDF Viewer Modal */}
+            {pdfViewerOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col">
+                        <div className="flex justify-between items-center p-4 border-b border-gray-200">
+                            <h3 className="text-lg font-bold text-gray-900">Invoice Preview</h3>
+                            <button
+                                onClick={handleClosePdfViewer}
+                                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                title="Close"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-hidden">
+                            <iframe
+                                src={pdfViewerUrl}
+                                className="w-full h-full border-0"
+                                title="Invoice PDF"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

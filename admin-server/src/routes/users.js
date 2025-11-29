@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const authQueryToken = require('../middleware/authQueryToken');
 const { uploadInvoice } = require('../middleware/uploadInvoice');
 const {
     getAllUsers,
@@ -53,7 +54,7 @@ router.post('/:id/invoices', auth, uploadInvoice.single('invoice'), uploadInvoic
 router.get('/:id/invoices', auth, getInvoices);
 router.put('/:id/invoices/:invoiceId', auth, uploadInvoice.single('invoice'), replaceInvoice);
 router.put('/:id/invoices/:invoiceId', auth, uploadInvoice.single('invoice'), replaceInvoice);
-router.get('/:id/invoices/:invoiceId/view', auth, viewInvoice);
+router.get('/:id/invoices/:invoiceId/view', authQueryToken, viewInvoice);
 router.delete('/:id/invoices/:invoiceId', auth, deleteInvoice);
 
 // Progress routes (Legacy? Keeping for now if needed, but tracker replaces it mostly)

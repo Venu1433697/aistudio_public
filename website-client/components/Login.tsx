@@ -1,13 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { User } from '../types';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { login } from '../services/api';
 
-interface LoginProps {
-  onNavigate: (view: string) => void;
-  onLogin: (user: User) => void;
-}
-
-const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
+const Login: React.FC = () => {
+  const navigate = useNavigate();
+  const { login: authLogin } = useAuth();
   const [pin, setPin] = useState(['', '', '', '']);
   const [mobile, setMobile] = useState('');
   const [error, setError] = useState('');
@@ -39,8 +37,8 @@ const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
 
     try {
       const response = await login({ mobile, mpin });
-      localStorage.setItem('token', response.data.token);
-      onLogin(response.data.user);
+      authLogin(response.data.user, response.data.token);
+      navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed');
     } finally {
@@ -53,7 +51,7 @@ const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
       {/* Left Side */}
       <div className="hidden lg:flex lg:w-[35%] relative flex-col justify-between p-12 bg-gray-900 overflow-hidden text-white">
         <div className="relative z-20">
-          <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('home'); }} className="font-serif text-2xl font-bold tracking-tight flex items-center gap-2 mb-2">
+          <a href="#" onClick={(e) => { e.preventDefault(); navigate('/'); }} className="font-serif text-2xl font-bold tracking-tight flex items-center gap-2 mb-2">
             <span className="bg-brand-pink text-white w-8 h-8 flex items-center justify-center rounded-md text-sm font-bold">NK</span>
             NK Fearless
           </a>
@@ -74,7 +72,7 @@ const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
         <div className="w-full max-w-lg mx-auto">
           <div className="flex justify-end mb-8 lg:mb-12 absolute top-6 right-6 lg:static">
             <p className="text-sm text-gray-500">
-              New to NK Fearless? <button onClick={() => onNavigate('signup')} className="text-blue-600 font-medium hover:underline">Sign Up</button>
+              New to NK Fearless? <button onClick={() => navigate('/signup')} className="text-blue-600 font-medium hover:underline">Sign Up</button>
             </p>
           </div>
           <div className="mb-10">
@@ -97,7 +95,7 @@ const Login: React.FC<LoginProps> = ({ onNavigate, onLogin }) => {
               <div className="flex justify-between items-center mb-3">
                 <label className="block text-sm font-bold text-gray-900">Enter M-PIN</label>
                 {/* UPDATED: Navigate to 'reset-mpin' on click */}
-                <button type="button" onClick={() => onNavigate('reset-mpin')} className="text-xs text-brand-pink font-medium hover:underline">Forgot M-PIN?</button>
+                <button type="button" onClick={() => navigate('/reset-mpin')} className="text-xs text-brand-pink font-medium hover:underline">Forgot M-PIN?</button>
               </div>
               <div className="flex gap-4">
                 {pin.map((digit, index) => (

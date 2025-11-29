@@ -1,13 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { User } from '../types';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { signup } from '../services/api';
 
-interface SignUpProps {
-  onNavigate: (view: string) => void;
-  onLogin: (user: User) => void;
-}
-
-const SignUp: React.FC<SignUpProps> = ({ onNavigate, onLogin }) => {
+const SignUp: React.FC = () => {
+  const navigate = useNavigate();
+  const { login: authLogin } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     companyName: '',
@@ -69,8 +67,8 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate, onLogin }) => {
 
     try {
       const response = await signup({ ...formData, mpin });
-      localStorage.setItem('token', response.data.token);
-      onLogin(response.data.user);
+      authLogin(response.data.user, response.data.token);
+      navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Signup failed');
     } finally {
@@ -82,7 +80,7 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate, onLogin }) => {
     <div className="flex min-h-screen bg-white font-sans animate-fade-in">
       <div className="hidden lg:flex lg:w-[35%] relative flex-col justify-between p-12 bg-gray-900 overflow-hidden text-white">
         <div className="relative z-20">
-          <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('home'); }} className="font-serif text-2xl font-bold tracking-tight flex items-center gap-2 mb-2">
+          <a href="#" onClick={(e) => { e.preventDefault(); navigate('/'); }} className="font-serif text-2xl font-bold tracking-tight flex items-center gap-2 mb-2">
             <span className="bg-brand-pink text-white w-8 h-8 flex items-center justify-center rounded-md text-sm font-bold">NK</span>
             NK Fearless
           </a>
@@ -102,7 +100,7 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate, onLogin }) => {
         <div className="w-full max-w-lg mx-auto">
           <div className="flex justify-end mb-8 lg:mb-12">
             <p className="text-sm text-gray-500">
-              Already a member? <button onClick={() => onNavigate('login')} className="text-blue-600 font-medium hover:underline">Sign In</button>
+              Already a member? <button onClick={() => navigate('/login')} className="text-blue-600 font-medium hover:underline">Sign In</button>
             </p>
           </div>
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8 font-serif">Sign up to NK Fearless</h2>

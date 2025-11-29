@@ -317,7 +317,7 @@ async function viewInvoice(req, res) {
 // Get Billing Details (Admin)
 async function getBillingDetails(req, res) {
   const id = req.params.id;
-  const user = await User.findById(id).select('billing billingEnabled billingEnabledBy billingEnabledAt');
+  const user = await User.findById(id).select('firstName lastName email billing billingEnabled billingEnabledBy billingEnabledAt');
   if (!user) return res.status(404).json({ message: 'User not found' });
   res.json(user);
 }

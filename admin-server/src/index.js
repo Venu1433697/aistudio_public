@@ -48,7 +48,7 @@ app.use('/api/user', clientUserRoutes);
 
 app.get('/', (req, res) => res.json({ ok: true }));
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 6000;
 
 connectDB()
   .then(() => {

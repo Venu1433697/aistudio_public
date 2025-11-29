@@ -7,7 +7,9 @@ import { Toaster } from 'react-hot-toast';
 import { ConfirmDialog } from './components/ConfirmDialog';
 
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return !!localStorage.getItem('os_token');
+  });
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {

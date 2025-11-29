@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Search, ChevronDown, Loader2, Plus, X, Edit2, DollarSign, Check } from 'lucide-react';
 import { api } from '../../services/api';
 import toast from 'react-hot-toast';
+import { ConfirmDialog } from '../ConfirmDialog';
 
 export const UsersPage: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -20,6 +21,7 @@ export const UsersPage: React.FC = () => {
     age: ''
   });
   const [enablingBillingFor, setEnablingBillingFor] = useState<string | null>(null);
+  const [billingConfirmUser, setBillingConfirmUser] = useState<any>(null);
 
   // Fetch users from API
   useEffect(() => {
@@ -105,25 +107,44 @@ export const UsersPage: React.FC = () => {
       return;
     }
 
-    // Confirmation dialog
-    const confirmed = window.confirm(
-      `Are you sure you want to enable billing for ${user.firstName} ${user.lastName}?\n\n` +
-      `⚠️ WARNING: This action is IRREVERSIBLE. Once enabled, billing cannot be disabled by anyone.`
-    );
+    // Show billing confirmation modal
+    setBillingConfirmUser(user);
+  };
 
-    if (!confirmed) return;
+  const handleBillingConfirm = async () => {
+    if (!billingConfirmUser) return;
+
+    const user = billingConfirmUser;
+    const adminProfile = localStorage.getItem('os_profile');
+    let adminEmail = '';
+
+    if (adminProfile) {
+      try {
+        const parsed = JSON.parse(adminProfile);
+        adminEmail = parsed.email || '';
+      } catch (e) {
+        console.error('Error parsing admin profile', e);
+      }
+    }
 
     try {
       setEnablingBillingFor(user._id || user.id);
-      const updated = await api.enableUserBilling(user._id || user.id, adminEmail);
-      setUsers(prev => prev.map(u => (u._id === updated._id || u.id === updated._id) ? updated : u));
+      await api.enableUserBilling(user._id || user.id, adminEmail);
+      // Refresh users list to ensure UI is in sync
+      const updatedUsers = await api.getUsers();
+      setUsers(updatedUsers);
       toast.success(`Billing enabled for ${user.firstName} ${user.lastName}`);
+      setBillingConfirmUser(null);
     } catch (error: any) {
       console.error('Error enabling billing:', error);
       toast.error(error.message || 'Failed to enable billing');
     } finally {
       setEnablingBillingFor(null);
     }
+  };
+
+  const handleBillingCancel = () => {
+    setBillingConfirmUser(null);
   };
 
   // Reset to first page whenever search or items per page changes
@@ -414,6 +435,18 @@ export const UsersPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Billing Confirmation Modal */}
+      <ConfirmDialog
+        isOpen={!!billingConfirmUser}
+        title="Enable Billing"
+        message={`Are you sure you want to enable billing for ${billingConfirmUser?.firstName} ${billingConfirmUser?.lastName}?\n\n⚠️ WARNING: This action is IRREVERSIBLE. Once enabled, billing cannot be disabled by anyone.`}
+        confirmText="Yes, Enable Billing"
+        cancelText="No, Cancel"
+        onConfirm={handleBillingConfirm}
+        onCancel={handleBillingCancel}
+        type="warning"
+      />
     </div>
   );
 };

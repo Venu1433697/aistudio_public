@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getBillingSummary, getProjectTracker, getInvoices, getPayments, downloadInvoice } from '../services/api';
 
 // --- Helper Modal Component for Email Choice (Reused logic) ---
@@ -113,11 +114,8 @@ const SendProofModal: React.FC<SendProofModalProps> = ({ isOpen, onClose, onSele
   );
 };
 
-interface BillingPageProps {
-  onNavigate: (view: string) => void;
-}
-
-const BillingPage: React.FC<BillingPageProps> = ({ onNavigate }) => {
+const BillingPage: React.FC = () => {
+  const navigate = useNavigate();
   const [showSendModal, setShowSendModal] = useState(false);
   const [showEmailChoice, setShowEmailChoice] = useState(false);
   const [receiptImage, setReceiptImage] = useState<string | null>(null);
@@ -204,7 +202,6 @@ const BillingPage: React.FC<BillingPageProps> = ({ onNavigate }) => {
     const shareData = {
       title: `Invoice #${inv.number}`,
       text: `Here is the invoice #${inv.number} from NK Fearless Solutions.`,
-      text: `Here is the invoice #${inv.number} from NK Fearless Solutions.`,
       url: downloadInvoice(inv._id)
     };
 
@@ -228,7 +225,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ onNavigate }) => {
           <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">No Active Project</h2>
           <p className="text-gray-500 mb-6">Billing details are not enabled for your account yet. Please contact the administrator if you have an active project.</p>
-          <button onClick={() => onNavigate('home')} className="bg-black text-white px-6 py-2 rounded-lg font-bold hover:bg-gray-800 transition-colors">
+          <button onClick={() => navigate('/')} className="bg-black text-white px-6 py-2 rounded-lg font-bold hover:bg-gray-800 transition-colors">
             Go Home
           </button>
         </div>
@@ -256,7 +253,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ onNavigate }) => {
 
       <div className="bg-white border-b border-gray-200 py-6 px-6 shadow-sm">
         <div className="max-w-5xl mx-auto flex items-center gap-4">
-          <button onClick={() => onNavigate('profile')} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
+          <button onClick={() => navigate('/profile')} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7 7-7" /></svg>
           </button>
           <h1 className="font-serif text-2xl font-bold text-gray-900">Billing & Payments</h1>
