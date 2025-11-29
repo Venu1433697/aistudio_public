@@ -14,19 +14,23 @@ async function run() {
   console.log('Cleared existing admins');
 
   const admins = [];
-  for (let i = 1; i <= 10; i++) {
-    const passwordPlain = `Admin${i}@123`;
-    const hashed = await bcrypt.hash(passwordPlain, 10);
+  const usersToSeed = [
+    { email: 'hanisha@gmail.com', password: 'Hani@3697', firstName: 'Hanisha' },
+    { email: 'priya@gmail.com', password: 'Priya@1433697', firstName: 'Priya' },
+    { email: 'lasya@gmail.com', password: 'Lasya@123', firstName: 'Lasya' }
+  ];
 
+  for (const user of usersToSeed) {
+    const hashed = await bcrypt.hash(user.password, 10);
     admins.push({
-      firstName: `Admin${i}`,
+      firstName: user.firstName,
       lastName: '',
-      email: `admin${i}@example.com`,
+      email: user.email,
       password: hashed,
       mobile: '',
       gender: ''
     });
-    console.log(`Prepared Admin${i} with password ${passwordPlain}`);
+    console.log(`Prepared ${user.firstName} (${user.email})`);
   }
 
   await Admin.insertMany(admins);

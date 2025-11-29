@@ -4,7 +4,7 @@ const fs = require('fs');
 const bcrypt = require('bcryptjs');
 
 async function getAllUsers(req, res) {
-  const users = await User.find({}, 'firstName lastName mobile email age').lean();
+  const users = await User.find({}, 'firstName lastName mobile email age billingEnabled billingEnabledBy billingEnabledAt').lean();
   res.json(users);
 }
 

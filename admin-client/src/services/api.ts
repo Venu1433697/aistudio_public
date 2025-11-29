@@ -288,7 +288,7 @@ export const api = {
   uploadProfileImage: async (formData: FormData) => {
     const res = await fetch(`${BASE_URL}/admin-profile/upload-profile-image`, {
       method: 'POST',
-      headers: { 'x-auth-token': getAuthHeader()['Authorization']?.replace('Bearer ', '') || '' },
+      headers: { ...getAuthHeader() },
       body: formData,
     });
     if (!res.ok) throw new Error('Failed to upload profile image');
@@ -298,7 +298,7 @@ export const api = {
   uploadBannerImage: async (formData: FormData) => {
     const res = await fetch(`${BASE_URL}/admin-profile/upload-banner-image`, {
       method: 'POST',
-      headers: { 'x-auth-token': getAuthHeader()['Authorization']?.replace('Bearer ', '') || '' },
+      headers: { ...getAuthHeader() },
       body: formData,
     });
     if (!res.ok) throw new Error('Failed to upload banner image');

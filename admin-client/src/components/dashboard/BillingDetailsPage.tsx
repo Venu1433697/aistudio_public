@@ -3,6 +3,7 @@ import { ArrowLeft, Loader2, Save, X, DollarSign, User, Mail, Calendar, Edit3, U
 import { api } from '../../services/api';
 import toast from 'react-hot-toast';
 import { ConfirmDialog } from '../ConfirmDialog';
+import { SuccessModal } from '../SuccessModal';
 
 interface BillingDetailsPageProps {
     userId: string;
@@ -44,6 +45,10 @@ export const BillingDetailsPage: React.FC<BillingDetailsPageProps> = ({ userId, 
     const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
     const [pdfViewerUrl, setPdfViewerUrl] = useState('');
 
+    // Success Modal state
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+
     useEffect(() => {
         const fetchUserDetails = async () => {
             try {
@@ -83,7 +88,8 @@ export const BillingDetailsPage: React.FC<BillingDetailsPageProps> = ({ userId, 
             const updated = await api.updateBillingDetails(userId, formData);
             setUser(updated);
             setIsEditing(false);
-            toast.success('Billing details updated successfully');
+            setSuccessMessage('Billing details updated successfully');
+            setShowSuccessModal(true);
         } catch (error) {
             console.error('Error updating billing details:', error);
             toast.error('Failed to update billing details');
@@ -137,11 +143,13 @@ export const BillingDetailsPage: React.FC<BillingDetailsPageProps> = ({ userId, 
             setIsUploadingInvoice(true);
             if (replaceInvoiceId) {
                 await api.replaceInvoice(userId, replaceInvoiceId, selectedFile, adminEmail);
-                toast.success('Invoice replaced successfully');
+                setSuccessMessage('Invoice replaced successfully');
+                setShowSuccessModal(true);
                 setReplaceInvoiceId(null);
             } else {
                 await api.uploadInvoice(userId, selectedFile, adminEmail);
-                toast.success('Invoice uploaded successfully');
+                setSuccessMessage('Invoice uploaded successfully');
+                setShowSuccessModal(true);
             }
 
             const updatedInvoices = await api.getInvoices(userId);
@@ -165,7 +173,8 @@ export const BillingDetailsPage: React.FC<BillingDetailsPageProps> = ({ userId, 
         try {
             await api.deleteInvoice(userId, deleteConfirmInvoice._id);
             setInvoices(prev => prev.filter(inv => inv._id !== deleteConfirmInvoice._id));
-            toast.success('Invoice deleted successfully');
+            setSuccessMessage('Invoice deleted successfully');
+            setShowSuccessModal(true);
             setDeleteConfirmInvoice(null);
         } catch (error) {
             console.error('Error deleting invoice:', error);
@@ -206,7 +215,8 @@ export const BillingDetailsPage: React.FC<BillingDetailsPageProps> = ({ userId, 
             setTrackerPhases(updatedTracker);
             setNewPhase({ name: '', date: '', status: 'Soon' });
             setIsAddingPhase(false);
-            toast.success('Phase added successfully');
+            setSuccessMessage('Phase added successfully');
+            setShowSuccessModal(true);
         } catch (error) {
             console.error('Error adding phase:', error);
             toast.error('Failed to add phase');
@@ -218,7 +228,8 @@ export const BillingDetailsPage: React.FC<BillingDetailsPageProps> = ({ userId, 
             const updatedTracker = await api.updateTrackerPhase(userId, trackerId, editPhaseData);
             setTrackerPhases(updatedTracker);
             setEditingPhaseId(null);
-            toast.success('Phase updated successfully');
+            setSuccessMessage('Phase updated successfully');
+            setShowSuccessModal(true);
         } catch (error) {
             console.error('Error updating phase:', error);
             toast.error('Failed to update phase');
@@ -230,7 +241,8 @@ export const BillingDetailsPage: React.FC<BillingDetailsPageProps> = ({ userId, 
         try {
             const updatedTracker = await api.deleteTrackerPhase(userId, trackerId);
             setTrackerPhases(updatedTracker);
-            toast.success('Phase deleted successfully');
+            setSuccessMessage('Phase deleted successfully');
+            setShowSuccessModal(true);
         } catch (error) {
             console.error('Error deleting phase:', error);
             toast.error('Failed to delete phase');
@@ -245,7 +257,8 @@ export const BillingDetailsPage: React.FC<BillingDetailsPageProps> = ({ userId, 
         try {
             setIsResettingMpin(true);
             await api.resetUserMpin(userId, newMpin);
-            toast.success('MPIN reset successfully');
+            setSuccessMessage('MPIN reset successfully');
+            setShowSuccessModal(true);
             setShowMpinModal(false);
             setNewMpin('');
         } catch (error: any) {
@@ -298,6 +311,11 @@ export const BillingDetailsPage: React.FC<BillingDetailsPageProps> = ({ userId, 
 
     return (
         <div className="space-y-6">
+            <SuccessModal
+                isOpen={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                message={successMessage}
+            />
             {/* Header Section */}
             <div>
                 <div className="flex items-center gap-4 mb-2">
@@ -636,8 +654,8 @@ export const BillingDetailsPage: React.FC<BillingDetailsPageProps> = ({ userId, 
                                 className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-black"
                             />
                             <input
-                                type="text"
-                                placeholder="Date (e.g. 12 Oct 2023)"
+                                type="date"
+                                placeholder="Date"
                                 value={newPhase.date}
                                 onChange={(e) => setNewPhase({ ...newPhase, date: e.target.value })}
                                 className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-black"
@@ -681,7 +699,7 @@ export const BillingDetailsPage: React.FC<BillingDetailsPageProps> = ({ userId, 
                                         className="border border-gray-300 rounded-lg px-2 py-1"
                                     />
                                     <input
-                                        type="text"
+                                        type="date"
                                         value={editPhaseData.date}
                                         onChange={(e) => setEditPhaseData({ ...editPhaseData, date: e.target.value })}
                                         className="border border-gray-300 rounded-lg px-2 py-1"

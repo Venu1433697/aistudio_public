@@ -1,8 +1,8 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Camera, Save, Pencil, Image as ImageIcon, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { api } from '../../services/api';
+import { SuccessModal } from '../SuccessModal';
 
 export const ProfilePage: React.FC = () => {
     const [bannerImage, setBannerImage] = useState<string | null>(() =>
@@ -36,6 +36,7 @@ export const ProfilePage: React.FC = () => {
 
     const bannerInputRef = useRef<HTMLInputElement>(null);
     const avatarInputRef = useRef<HTMLInputElement>(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [activeField, setActiveField] = useState<string | null>(null);
 
     // Fetch Profile Data
@@ -134,19 +135,8 @@ export const ProfilePage: React.FC = () => {
             localStorage.setItem('os_profile', JSON.stringify(updatedProfile));
             window.dispatchEvent(new Event('profileUpdated'));
 
-            // Generate custom success message
-            const adminName = formData.firstName || 'Admin';
-            let message = '';
-
-            if (changedFields.length === 1) {
-                message = `${adminName} updated their ${changedFields[0]}`;
-            } else if (changedFields.length === 2) {
-                message = `${adminName} updated their ${changedFields[0]} and ${changedFields[1]}`;
-            } else {
-                message = `${adminName} updated ${changedFields.length} fields`;
-            }
-
-            toast.success(message);
+            // Show success modal
+            setShowSuccessModal(true);
             setChangedFields([]);
         } catch (error) {
             console.error('Error saving profile:', error);
@@ -172,12 +162,18 @@ export const ProfilePage: React.FC = () => {
     return (
         <div className="w-full max-w-5xl mx-auto space-y-6 animate-fade-in-up pb-10">
 
+            {/* Success Modal */}
+            <SuccessModal
+                isOpen={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                message="Profile updated successfully."
+            />
+
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 className="text-2xl font-semibold text-gray-900">Welcome, {formData.firstName || 'Admin'}</h2>
                     <p className="text-gray-500 text-sm mt-1">{new Date().toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 </div>
-
 
                 {hasChanges && (
                     <div className="flex items-center gap-4 self-end md:self-auto">
