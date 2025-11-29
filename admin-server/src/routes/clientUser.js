@@ -188,4 +188,49 @@ router.get('/billing/payments', auth, async (req, res) => {
     }
 });
 
+// Middleware to verify token from query parameter (for file viewing)
+const authQueryToken = require('../middleware/authQueryToken');
+
+// View/Download Invoice
+router.get('/billing/invoices/:invoiceId/view', authQueryToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.admin.id).select('billing.invoices');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        // Find the invoice in user's billing.invoices array
+        const invoice = user.billing.invoices.find(inv => inv._id.toString() === req.params.invoiceId);
+
+        if (!invoice) {
+            return res.status(404).json({ message: 'Invoice not found' });
+        }
+
+        let filePath;
+
+        // Check if the stored path is absolute (starts with / or C:\ etc)
+        // We check this manually because path.isAbsolute can be tricky with mixed separators
+        const isAbsolute = invoice.filepath.startsWith('/') || invoice.filepath.match(/^[a-zA-Z]:\\/) || invoice.filepath.match(/^[a-zA-Z]:\//);
+
+        if (isAbsolute && fs.existsSync(invoice.filepath)) {
+            filePath = invoice.filepath;
+        } else {
+            // Try resolving relative to project root
+            const relativePath = path.join(__dirname, '../../', invoice.filepath);
+            if (fs.existsSync(relativePath)) {
+                filePath = relativePath;
+            } else if (fs.existsSync(invoice.filepath)) {
+                // Fallback: check raw path again even if it didn't look absolute
+                filePath = invoice.filepath;
+            } else {
+                return res.status(404).json({ message: 'Invoice file not found on server' });
+            }
+        }
+
+        // Send the file
+        res.sendFile(filePath);
+    } catch (err) {
+        console.error('Error viewing invoice:', err);
+        res.status(500).json({ message: 'Server Error' });
+    }
+});
+
 module.exports = router;

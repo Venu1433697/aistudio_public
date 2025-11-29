@@ -36,19 +36,9 @@ export const getProjectTracker = () => api.get('/user/billing/tracker');
 export const getInvoices = () => api.get('/user/billing/invoices');
 export const getPayments = () => api.get('/user/billing/payments');
 
-export const downloadInvoice = (filepath: string) => {
-    // Extract invoiceId from filepath or use a different approach if we don't have it here.
-    // The previous implementation used filepath directly.
-    // The new API requires invoiceId.
-    // However, the frontend receives the invoice object which has _id.
-    // So we should change this function to accept invoiceId.
-    // But wait, the frontend might be calling it with filepath.
-    // Let's check BillingPage.tsx.
-    // It calls handleDownloadInvoice(inv.filepath, inv.filename).
-    // And handleViewInvoice(inv.filepath).
-    // So we need to update BillingPage.tsx to pass inv._id instead of filepath.
-    // For now, let's update this signature to take invoiceId.
-    return `${api.defaults.baseURL}/user/billing/invoices/${filepath}/view`;
+export const downloadInvoice = (invoiceId: string) => {
+    const token = localStorage.getItem('token');
+    return `${API_URL}/user/billing/invoices/${invoiceId}/view${token ? `?token=${token}` : ''}`;
 };
 
 export default api;

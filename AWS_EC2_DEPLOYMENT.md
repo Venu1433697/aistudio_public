@@ -1,4 +1,4 @@
-# AI Studio - AWS EC2 Deployment Guide
+y# AI Studio - AWS EC2 Deployment Guide
 
 This guide provides the environment configuration files needed to deploy the AI Studio application on an AWS EC2 instance.
 

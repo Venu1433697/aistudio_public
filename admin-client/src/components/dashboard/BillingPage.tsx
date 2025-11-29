@@ -147,9 +147,9 @@ export const BillingPage: React.FC<BillingPageProps> = ({ onNavigateToBillingDet
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {currentUsers.map((user) => {
-                                const totalCost = user.billingDetails?.totalCost || 0;
-                                const paidAmount = user.billingDetails?.paidAmount || 0;
-                                const remainingAmount = user.billingDetails?.remainingAmount || 0;
+                                const totalCost = user.billing?.totalCost || 0;
+                                const paidAmount = user.billing?.paidAmount || 0;
+                                const remainingAmount = totalCost - paidAmount;
                                 const isPaid = remainingAmount <= 0 && totalCost > 0;
                                 const isPartiallyPaid = paidAmount > 0 && remainingAmount > 0;
 

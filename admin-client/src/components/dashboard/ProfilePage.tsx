@@ -112,6 +112,9 @@ export const ProfilePage: React.FC = () => {
                 setAvatarImage(api.getImageUrl(updatedProfile.profileImage));
             }
 
+            // Dispatch event to update profile image across all components
+            window.dispatchEvent(new Event('profileUpdated'));
+
             toast.success(`${type === 'banner' ? 'Banner' : 'Profile'} image updated successfully!`, { id: toastId });
         } catch (error) {
             console.error('Image upload failed:', error);
